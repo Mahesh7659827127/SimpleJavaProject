@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Manager – Spring Boot API Demo</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    /* ── Layout ── */
+    .wrapper { max-width: 900px; margin: 0 auto; }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    header h1 { font-size: 2rem; color: #38bdf8; letter-spacing: -0.5px; }
+    header p  { color: #94a3b8; margin-top: 6px; font-size: 0.95rem; }
+
+    /* ── API Badge ── */
+    .api-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 999px; padding: 4px 14px; font-size: 0.8rem;
+      color: #94a3b8; margin-top: 10px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── Cards ── */
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1rem; text-transform: uppercase;
+      letter-spacing: 1px; color: #38bdf8; margin-bottom: 16px;
+    }
+
+    /* ── Form ── */
+    .form-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    input[type="number"], input[type="text"] {
+      flex: 1; min-width: 110px;
+      background: #0f172a; border: 1px solid #334155;
+      color: #e2e8f0; border-radius: 8px;
+      padding: 10px 14px; font-size: 0.9rem;
+      outline: none; transition: border-color .2s;
+    }
+    input:focus { border-color: #38bdf8; }
+    input::placeholder { color: #475569; }
+
+    button {
+      padding: 10px 20px; border: none; border-radius: 8px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    button:active { transform: scale(.97); }
+    button:hover  { opacity: .88; }
+
+    .btn-primary  { background: #38bdf8; color: #0f172a; }
+    .btn-success  { background: #22c55e; color: #0f172a; }
+    .btn-warning  { background: #f59e0b; color: #0f172a; }
+    .btn-danger   { background: #ef4444; color: #fff; }
+    .btn-sm       { padding: 6px 12px; font-size: 0.8rem; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    thead th {
+      text-align: left; padding: 10px 14px;
+      color: #94a3b8; font-weight: 600;
+      border-bottom: 1px solid #334155;
+    }
+    tbody tr { border-bottom: 1px solid #1e293b; transition: background .15s; }
+    tbody tr:hover { background: #0f172a; }
+    td { padding: 12px 14px; }
+    td.price { color: #4ade80; font-weight: 600; }
+    td.id    { color: #94a3b8; }
+    .empty { text-align: center; color: #475569; padding: 32px 0; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: #334155; color: #e2e8f0;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 0.88rem; opacity: 0;
+      transition: opacity .3s; pointer-events: none;
+      border-left: 4px solid #38bdf8;
+      max-width: 280px;
+    }
+    #toast.show { opacity: 1; }
+    #toast.error { border-color: #ef4444; }
+    #toast.success { border-color: #22c55e; }
+
+    /* ── Method Legend ── */
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .tag {
+      font-size: 0.72rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 4px; letter-spacing: .5px;
+    }
+    .get    { background:#0ea5e940; color:#38bdf8; border:1px solid #0ea5e960; }
+    .post   { background:#22c55e40; color:#4ade80; border:1px solid #22c55e60; }
+    .put    { background:#f59e0b40; color:#fbbf24; border:1px solid #f59e0b60; }
+    .delete { background:#ef444440; color:#f87171; border:1px solid #ef444460; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <h1>🛒 Product Manager</h1>
+    <p>Simple demo showing <strong>Frontend ↔ Spring Boot REST API</strong> connectivity</p>
+    <span class="api-badge">
+      <span class="dot"></span>
+      Backend: <code>http://localhost:8080</code>
+    </span>
+  </header>
+
+  <!-- API Map card -->
+  <div class="card">
+    <h2>🗺 API Endpoints Used</h2>
+    <div class="legend">
+      <span class="tag get">GET /products</span>
+      <span class="tag get">GET /products/{id}</span>
+      <span class="tag post">POST /products</span>
+      <span class="tag put">PUT /update</span>
+      <span class="tag delete">DELETE /deleteProd/{id}</span>
+    </div>
+  </div>
+
+  <!-- Fetch All -->
+  <div class="card">
+    <h2>📦 All Products <span style="font-size:.75rem;color:#475569;text-transform:none;letter-spacing:0">GET /products</span></h2>
+    <button class="btn-primary" onclick="fetchAll()">🔄 Load All Products</button>
+    <div style="margin-top:16px; overflow-x:auto;">
+      <table id="productTable">
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Price (₹)</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="4" class="empty">Click "Load All Products" to fetch from API</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Get by ID -->
+  <div class="card">
+    <h2>🔍 Get Product by ID <span style="font-size:.75rem;color:#475569;text-transform:none;letter-spacing:0">GET /products/{id}</span></h2>
+    <div class="form-row">
+      <input type="number" id="searchId" placeholder="Product ID (e.g. 101)" />
+      <button class="btn-primary" onclick="fetchById()">Search</button>
+    </div>
+    <div id="searchResult" style="margin-top:14px; color:#94a3b8; font-size:.9rem;"></div>
+  </div>
+
+  <!-- Add Product -->
+  <div class="card">
+    <h2>➕ Add Product <span style="font-size:.75rem;color:#475569;text-transform:none;letter-spacing:0">POST /products</span></h2>
+    <div class="form-row">
+      <input type="number" id="addId"    placeholder="ID (e.g. 104)" />
+      <input type="text"   id="addName"  placeholder="Name (e.g. MacBook)" />
+      <input type="number" id="addPrice" placeholder="Price (e.g. 120000)" />
+      <button class="btn-success" onclick="addProduct()">Add</button>
+    </div>
+  </div>
+
+  <!-- Update Product -->
+  <div class="card">
+    <h2>✏️ Update Product <span style="font-size:.75rem;color:#475569;text-transform:none;letter-spacing:0">PUT /update</span></h2>
+    <div class="form-row">
+      <input type="number" id="upId"    placeholder="Existing ID" />
+      <input type="text"   id="upName"  placeholder="New Name" />
+      <input type="number" id="upPrice" placeholder="New Price" />
+      <button class="btn-warning" onclick="updateProduct()">Update</button>
+    </div>
+  </div>
+
+  <!-- Delete Product -->
+  <div class="card">
+    <h2>🗑️ Delete Product <span style="font-size:.75rem;color:#475569;text-transform:none;letter-spacing:0">DELETE /deleteProd/{id}</span></h2>
+    <div class="form-row">
+      <input type="number" id="delId" placeholder="Product ID to delete" />
+      <button class="btn-danger" onclick="deleteProduct()">Delete</button>
+    </div>
+  </div>
+
+</div><!-- /wrapper -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  const BASE = 'http://localhost:8080';
+
+  /* ── Toast ── */
+  function toast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.className = '', 2800);
+  }
+
+  /* ── Render table rows ── */
+  function renderTable(products) {
+    const tbody = document.getElementById('tableBody');
+    if (!products || products.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No products found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = products.map(p => `
+      <tr>
+        <td class="id">#${p.prodId}</td>
+        <td>${p.proName}</td>
+        <td class="price">₹${p.price.toLocaleString()}</td>
+        <td>
+          <button class="btn-warning btn-sm" onclick="prefillUpdate(${p.prodId},'${p.proName}',${p.price})">Edit</button>
+          &nbsp;
+          <button class="btn-danger btn-sm" onclick="quickDelete(${p.prodId})">Delete</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  /* ── GET /products ── */
+  async function fetchAll() {
+    try {
+      const res = await fetch(`${BASE}/products`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderTable(data);
+      toast(`✅ Loaded ${data.length} products`, 'success');
+    } catch (e) {
+      toast(`❌ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /* ── GET /products/{id} ── */
+  async function fetchById() {
+    const id = document.getElementById('searchId').value.trim();
+    if (!id) { toast('Enter a product ID', 'error'); return; }
+    try {
+      const res = await fetch(`${BASE}/products/${id}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const p = await res.json();
+      document.getElementById('searchResult').innerHTML = `
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;display:inline-block;">
+          <strong style="color:#38bdf8">ID:</strong> ${p.prodId} &nbsp;|&nbsp;
+          <strong style="color:#38bdf8">Name:</strong> ${p.proName} &nbsp;|&nbsp;
+          <strong style="color:#4ade80">Price:</strong> ₹${p.price.toLocaleString()}
+        </div>`;
+      toast('✅ Product found', 'success');
+    } catch (e) {
+      toast(`❌ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /* ── POST /products ── */
+  async function addProduct() {
+    const prodId  = Number(document.getElementById('addId').value);
+    const proName = document.getElementById('addName').value.trim();
+    const price   = Number(document.getElementById('addPrice').value);
+    if (!prodId || !proName || !price) { toast('Fill all Add fields', 'error'); return; }
+    try {
+      const res = await fetch(`${BASE}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prodId, proName, price })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast('✅ Product added!', 'success');
+      ['addId','addName','addPrice'].forEach(id => document.getElementById(id).value = '');
+      fetchAll(); // refresh table
+    } catch (e) {
+      toast(`❌ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /* ── PUT /update ── */
+  async function updateProduct() {
+    const prodId  = Number(document.getElementById('upId').value);
+    const proName = document.getElementById('upName').value.trim();
+    const price   = Number(document.getElementById('upPrice').value);
+    if (!prodId || !proName || !price) { toast('Fill all Update fields', 'error'); return; }
+    try {
+      const res = await fetch(`${BASE}/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prodId, proName, price })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast('✅ Product updated!', 'success');
+      fetchAll(); // refresh table
+    } catch (e) {
+      toast(`❌ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /* ── DELETE /deleteProd/{id} ── */
+  async function deleteProduct() {
+    const id = document.getElementById('delId').value.trim();
+    if (!id) { toast('Enter a product ID to delete', 'error'); return; }
+    await doDelete(id);
+    document.getElementById('delId').value = '';
+  }
+
+  async function quickDelete(id) {
+    if (!confirm(`Delete product #${id}?`)) return;
+    await doDelete(id);
+  }
+
+  async function doDelete(id) {
+    try {
+      const res = await fetch(`${BASE}/deleteProd/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      toast(`✅ Product #${id} deleted`, 'success');
+      fetchAll();
+    } catch (e) {
+      toast(`❌ Error: ${e.message}`, 'error');
+    }
+  }
+
+  /* ── Helpers ── */
+  function prefillUpdate(id, name, price) {
+    document.getElementById('upId').value    = id;
+    document.getElementById('upName').value  = name;
+    document.getElementById('upPrice').value = price;
+    document.getElementById('upId').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    toast('Fields pre-filled for edit ✏️');
+  }
+
+  // Auto-load on start
+  fetchAll();
+</script>
+</body>
+</html>
