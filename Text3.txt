@@ -1,0 +1,2 @@
+Adding third file in the text3.txt
+so we need to pull it first than push
